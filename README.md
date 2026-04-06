@@ -92,7 +92,7 @@ DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=role_based_system_multi_step_form
 DB_USERNAME=root
-DB_PASSWORD=
+DB_PASSWORD=8080
 ```
 
 Change `DB_USERNAME` and `DB_PASSWORD` according to your local MySQL setup.
@@ -115,10 +115,10 @@ To send User ID and temporary password by email, configure SMTP in `.env`:
 MAIL_MAILER=smtp
 MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
-MAIL_USERNAME=your_email@gmail.com
-MAIL_PASSWORD=your_app_password
+MAIL_USERNAME=sumon5505@gmail.com
+MAIL_PASSWORD=azhu wkoe srol dpty
 MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=your_email@gmail.com
+MAIL_FROM_ADDRESS=sumon5505@gmail.com
 MAIL_FROM_NAME="${APP_NAME}"
 ```
 
@@ -185,13 +185,6 @@ http://127.0.0.1:8000
 - View all submitted user records
 - Change password after login
 
-## Important notes
-
-- The project uses **MySQL**, not SQL Server.
-- The included SQL dump contains sample/test data.
-- If mail is not configured, registration may complete but email sending may fail.
-- If needed, passwords can be reset quickly through Laravel Tinker.
-
 ## Useful commands
 
 ```bash
@@ -200,6 +193,65 @@ php artisan serve
 npm run dev
 php artisan tinker
 ```
+
+### 1. `install_dependencies.bat`
+
+This is the main Windows batch installer file.
+
+Run it on Windows to automatically execute:
+
+```bat
+composer install
+npm install
+copy .env.example .env
+php artisan key:generate
+php artisan migrate
+npm run build
+```
+
+Use this if you want a one-click dependency setup on Windows.
+
+### 2. `install_dependencies.ps1`
+
+This is the PowerShell version of the installer.
+
+It performs the same setup steps as the `.bat` file, but is intended for PowerShell users.
+
+Run it using:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File install_dependencies.ps1
+```
+
+## Database Setup
+
+Database used: **MySQL**
+
+If you want to import the provided SQL file:
+
+```bash
+mysql -u root -p role_based_system_multi_step_form < role_based_system_multi_step_form.sql
+```
+
+## Important Notes
+
+- Use **MySQL** for database setup
+- Make sure your `.env` mail settings are correct for email sending
+- Gmail users should use an **App Password**
+- `install_dependencies.bat` or `install_dependencies.ps1` is the easiest way to set up dependencies on Windows
+
+## Project Files to Submit
+
+- Project source code
+- `README.md`
+- `install_dependencies.bat`
+- `install_dependencies.ps1`
+- `role_based_system_multi_step_form.sql`
+
+## Author
+
+GitHub: [codewithFishie](https://github.com/codewithFishie)
+
 
 ## License
 

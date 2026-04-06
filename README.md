@@ -240,7 +240,7 @@ mysql -u root -p role_based_system_multi_step_form < role_based_system_multi_ste
 - Gmail users should use an **App Password**
 - `install_dependencies.bat` or `install_dependencies.ps1` is the easiest way to set up dependencies on Windows
 
-## Project Files to Submit
+## Project Files you need
 
 - Project source code
 - `README.md`

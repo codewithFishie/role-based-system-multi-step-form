@@ -1,34 +1,102 @@
 <?php
 
-use App\Http\Controllers\AdminDashboardController;
-use App\Http\Controllers\UserDashboardController;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+
+    return view('form-page');
 })->name('home');
 
+Route::get('/sign-in', function () {
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+
+    return view('auth-custom-login');
+})->name('signin');
+
+Route::post('/sign-in', function (Request $request) {
+    $validated = $request->validate([
+        'identifier' => ['required', 'string'],
+        'password' => ['required', 'string'],
+    ]);
+
+    $identifier = trim($validated['identifier']);
+
+    $user = filter_var($identifier, FILTER_VALIDATE_EMAIL)
+        ? User::where('email', $identifier)->first()
+        : User::where('login_id', strtoupper($identifier))->first();
+
+    if (! $user || ! Hash::check($validated['password'], $user->password)) {
+        return back()
+            ->withErrors(['identifier' => 'These credentials do not match our records.'])
+            ->onlyInput('identifier');
+    }
+
+    Auth::login($user, $request->boolean('remember'));
+    $request->session()->regenerate();
+
+    if ($user->must_change_password) {
+        return redirect()->route('force.password');
+    }
+
+    return redirect()->route('dashboard');
+})->name('signin.store');
+
+Route::get('/login', function () {
+    return redirect()->route('signin');
+})->name('login');
+
+Route::get('/register', function () {
+    return redirect()->route('home');
+})->name('register');
+
 Route::middleware(['auth'])->group(function () {
+    
+    Route::get('/application/form', function () {
+    return redirect()->route('user.dashboard');
+    })->middleware('role:user')->name('application.form');
+    
+    Route::get('/force-password', function () {
+        return view('force-password');
+    })->name('force.password');
+
+
+    Route::post('/force-password', function (Request $request) {
+        $request->validate([
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user = auth()->user();
+        $user->password = Hash::make($request->password);
+        $user->must_change_password = false;
+        $user->save();
+
+        return redirect()->route('dashboard')->with('success', 'Password changed successfully.');
+    })->name('force.password.store');
+
     Route::get('/dashboard', function () {
-        $user = Auth::user();
-
-        if (!$user) {
-            return redirect('/login');
-        }
-
-        if ($user->role === 'admin') {
+        if (auth()->user()->role === 'admin') {
             return redirect()->route('admin.dashboard');
         }
 
         return redirect()->route('user.dashboard');
     })->name('dashboard');
 
-    Route::get('/admin/dashboard', [AdminDashboardController::class, 'index'])
+    Route::view('/admin/dashboard', 'admin.dashboard')
         ->middleware('role:admin')
         ->name('admin.dashboard');
 
-    Route::get('/user/dashboard', [UserDashboardController::class, 'index'])
+    Route::view('/user/dashboard', 'user.dashboard')
         ->middleware('role:user')
         ->name('user.dashboard');
 });
+
+require __DIR__.'/settings.php';

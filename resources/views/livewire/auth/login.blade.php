@@ -1,59 +1,132 @@
-<x-layouts::auth :title="__('Log in')">
+<?php
+
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
+use Livewire\Component;
+
+new class extends Component
+{
+    public string $identifier = '';
+    public string $password = '';
+    public bool $remember = false;
+
+    protected function rules(): array
+    {
+        return [
+            'identifier' => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ];
+    }
+
+    public function login(): void
+    {
+        $this->validate();
+
+        $identifier = trim($this->identifier);
+        $password = $this->password;
+
+        $user = filter_var($identifier, FILTER_VALIDATE_EMAIL)
+            ? User::where('email', $identifier)->first()
+            : User::where('login_id', strtoupper($identifier))->first();
+
+        if (! $user || ! Hash::check($password, $user->password)) {
+            throw ValidationException::withMessages([
+                'identifier' => 'These credentials do not match our records.',
+            ]);
+        }
+
+        Auth::login($user, $this->remember);
+
+        request()->session()->regenerate();
+
+        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+    }
+};
+
+?>
+
+<x-layouts::auth>
     <div class="flex flex-col gap-6">
-        <x-auth-header :title="__('Log in to your account')" :description="__('Enter your email and password below to log in')" />
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-white">Log in to your account</h1>
+            <p class="mt-2 text-sm text-zinc-400">
+                Enter your User ID or email and password below to log in
+            </p>
+        </div>
 
-        <!-- Session Status -->
-        <x-auth-session-status class="text-center" :status="session('status')" />
-
-        <form method="POST" action="{{ route('login.store') }}" class="flex flex-col gap-6">
-            @csrf
-
-            <!-- Email Address -->
-            <flux:input
-                name="email"
-                :label="__('Email address')"
-                :value="old('email')"
-                type="email"
-                required
-                autofocus
-                autocomplete="email"
-                placeholder="email@example.com"
-            />
-
-            <!-- Password -->
-            <div class="relative">
-                <flux:input
-                    name="password"
-                    :label="__('Password')"
-                    type="password"
-                    required
-                    autocomplete="current-password"
-                    :placeholder="__('Password')"
-                    viewable
-                />
-
-                @if (Route::has('password.request'))
-                    <flux:link class="absolute top-0 text-sm end-0" :href="route('password.request')" wire:navigate>
-                        {{ __('Forgot your password?') }}
-                    </flux:link>
-                @endif
-            </div>
-
-            <!-- Remember Me -->
-            <flux:checkbox name="remember" :label="__('Remember me')" :checked="old('remember')" />
-
-            <div class="flex items-center justify-end">
-                <flux:button variant="primary" type="submit" class="w-full" data-test="login-button">
-                    {{ __('Log in') }}
-                </flux:button>
-            </div>
-        </form>
-
-        @if (Route::has('register'))
-            <div class="space-x-1 text-sm text-center rtl:space-x-reverse text-zinc-600 dark:text-zinc-400">
-                <span>{{ __('Don\'t have an account?') }}</span>
-                <flux:link :href="route('register')" wire:navigate>{{ __('Sign up') }}</flux:link>
+        @if (session('status'))
+            <div class="rounded-xl border border-green-700 bg-green-950/40 px-4 py-3 text-center text-green-300">
+                {{ session('status') }}
             </div>
         @endif
+
+        <form wire:submit.prevent="login" class="flex flex-col gap-6">
+            <div>
+                <label for="identifier" class="mb-2 block text-sm font-medium text-white">
+                    User ID or Email address
+                </label>
+                <input
+                    id="identifier"
+                    type="text"
+                    wire:model.defer="identifier"
+                    placeholder="Enter your User ID or email"
+                    class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white placeholder-zinc-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                >
+                @error('identifier')
+                    <span class="mt-2 block text-sm text-red-400">{{ $message }}</span>
+                @enderror
+            </div>
+
+            <div>
+                <div class="mb-2 flex items-center justify-between">
+                    <label for="password" class="block text-sm font-medium text-white">
+                        Password
+                    </label>
+
+                    @if (Route::has('password.request'))
+                        <a href="{{ route('password.request') }}" class="text-sm text-white underline" wire:navigate>
+                            Forgot your password?
+                        </a>
+                    @endif
+                </div>
+
+                <input
+                    id="password"
+                    type="password"
+                    wire:model.defer="password"
+                    placeholder="Password"
+                    class="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-white placeholder-zinc-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                >
+                @error('password')
+                    <span class="mt-2 block text-sm text-red-400">{{ $message }}</span>
+                @enderror
+            </div>
+
+            <div class="flex items-center gap-2">
+                <input
+                    id="remember"
+                    type="checkbox"
+                    wire:model="remember"
+                    class="h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-blue-600 focus:ring-blue-500"
+                >
+                <label for="remember" class="text-sm text-white">Remember me</label>
+            </div>
+
+            <button
+                type="submit"
+                class="w-full rounded-xl bg-white px-4 py-3 font-medium text-black transition hover:bg-zinc-200"
+            >
+                Log in
+            </button>
+        </form>
+
+        <div class="text-center text-sm text-zinc-400">
+            <span>Don't have an account?</span>
+            <a href="{{ route('home') }}" class="font-medium text-white underline" wire:navigate>
+                Sign up
+            </a>
+        </div>
     </div>
 </x-layouts::auth>

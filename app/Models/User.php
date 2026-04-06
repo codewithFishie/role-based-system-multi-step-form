@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Models;
-
+use Illuminate\Database\Eloquent\Relations\HasOne;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use App\Models\Application;
 
 
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
@@ -21,9 +22,10 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'password',
         'role',
-        'custom_user_id',
+        'login_id',
+        'must_change_password',
+        'password',
     ];
 
     protected $hidden = [
@@ -46,5 +48,26 @@ class User extends Authenticatable
             $user->saveQuietly();
         }
     });
+    }
+        public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isUser(): bool
+    {
+        return $this->role === 'user';
+    }
+        public function application(): HasOne
+    {
+        return $this->hasOne(Application::class);
+    }
+    public function initials(): string
+    {
+        return collect(explode(' ', trim($this->name)))
+            ->filter()
+            ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
+            ->take(2)
+            ->implode('');
     }
 }

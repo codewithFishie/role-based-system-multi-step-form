@@ -19,14 +19,16 @@
             <div class="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-900">
                 <h2 class="mb-4 text-xl font-semibold">Submitted Registration Data</h2>
 
-                <p><strong>Phone:</strong> {{ auth()->user()->application->phone }}</p>
-                <p><strong>Address:</strong> {{ auth()->user()->application->address }}</p>
-                <p><strong>Date of Birth:</strong> {{ auth()->user()->application->date_of_birth }}</p>
-                <p><strong>Gender:</strong> {{ auth()->user()->application->gender }}</p>
-                <p><strong>Institution:</strong> {{ auth()->user()->application->institution }}</p>
-                <p><strong>Department:</strong> {{ auth()->user()->application->department }}</p>
-                <p><strong>Semester:</strong> {{ auth()->user()->application->semester }}</p>
-                <p><strong>Skills:</strong> {{ auth()->user()->application->skills }}</p>
+                <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <p><strong>Phone:</strong> {{ auth()->user()->application->phone }}</p>
+                    <p><strong>Address:</strong> {{ auth()->user()->application->address }}</p>
+                    <p><strong>Date of Birth:</strong> {{ auth()->user()->application->date_of_birth }}</p>
+                    <p><strong>Gender:</strong> {{ auth()->user()->application->gender }}</p>
+                    <p><strong>Institution:</strong> {{ auth()->user()->application->institution }}</p>
+                    <p><strong>Department:</strong> {{ auth()->user()->application->department }}</p>
+                    <p><strong>Semester:</strong> {{ auth()->user()->application->semester }}</p>
+                    <p><strong>Skills:</strong> {{ auth()->user()->application->skills }}</p>
+                </div>
             </div>
         @endif
 

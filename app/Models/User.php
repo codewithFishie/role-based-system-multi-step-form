@@ -26,6 +26,8 @@ class User extends Authenticatable
         'login_id',
         'must_change_password',
         'password',
+        'is_main_admin',
+        'is_blocked',
     ];
 
     protected $hidden = [
@@ -69,5 +71,16 @@ class User extends Authenticatable
             ->map(fn ($part) => strtoupper(substr($part, 0, 1)))
             ->take(2)
             ->implode('');
+    }
+        protected $casts = [
+        'email_verified_at' => 'datetime',
+        'must_change_password' => 'boolean',
+        'is_main_admin' => 'boolean',
+        'is_blocked' => 'boolean',
+    ];
+
+    public function isMainAdmin(): bool
+    {
+        return $this->role === 'admin' && $this->is_main_admin;
     }
 }

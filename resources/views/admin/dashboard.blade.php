@@ -7,6 +7,22 @@
                 {{ session('success') }}
             </div>
         @endif
+        @if (auth()->user()->application)
+            <div class="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-900">
+                <h2 class="mb-4 text-xl font-semibold">Submitted Registration Data</h2>
+
+                <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <p><strong>Phone:</strong> {{ auth()->user()->application->phone }}</p>
+                    <p><strong>Address:</strong> {{ auth()->user()->application->address }}</p>
+                    <p><strong>Date of Birth:</strong> {{ auth()->user()->application->date_of_birth }}</p>
+                    <p><strong>Gender:</strong> {{ auth()->user()->application->gender }}</p>
+                    <p><strong>Institution:</strong> {{ auth()->user()->application->institution }}</p>
+                    <p><strong>Department:</strong> {{ auth()->user()->application->department }}</p>
+                    <p><strong>Semester:</strong> {{ auth()->user()->application->semester }}</p>
+                    <p><strong>Skills:</strong> {{ auth()->user()->application->skills }}</p>
+                </div>
+            </div>
+        @endif
 
         <div class="rounded-xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-900">
             <p><strong>Name:</strong> {{ auth()->user()->name }}</p>
@@ -15,6 +31,10 @@
         </div>
 
         <div class="flex gap-4">
+            
+            <a href="{{ route('admin.users') }}" class="rounded bg-indigo-600 px-4 py-2 text-white">
+                Manage Users
+            </a>
             <a href="{{ route('admin.submissions') }}" class="rounded bg-green-600 px-4 py-2 text-white">
                 View All User Submissions
             </a>

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
+
 Route::get('/', function () {
     if (auth()->check()) {
         return redirect()->route('dashboard');
@@ -38,6 +39,11 @@ Route::post('/sign-in', function (Request $request) {
         return back()
             ->withErrors(['identifier' => 'These credentials do not match our records.'])
             ->onlyInput('identifier');
+    }
+    if ($user->is_blocked) {
+    return back()
+        ->withErrors(['identifier' => 'Your account has been blocked by an admin.'])
+        ->onlyInput('identifier');
     }
 
     Auth::login($user, $request->boolean('remember'));
@@ -141,9 +147,129 @@ Route::middleware(['auth'])->group(function () {
 
         return redirect()->route('dashboard')->with('success', 'Password changed successfully.');
         })->name('password.change.store');
+    
+    Route::get('/admin/users', function () {
+    if (! auth()->user()->isAdmin()) {
+        abort(403);
+    }
+
+    $users = User::with('application')->orderByDesc('id')->get();
+
+    return view('admin.users', compact('users'));
+    })->middleware('role:admin')->name('admin.users');
+
+    Route::post('/admin/users/{user}/promote', function (User $user) {
+        $admin = auth()->user();
+
+        if (! $admin->isAdmin()) {
+            abort(403);
+        }
+
+        if ($user->id === $admin->id) {
+            return back()->with('error', 'You cannot change your own role here.');
+        }
+
+        if ($user->isMainAdmin()) {
+            return back()->with('error', 'Main admin cannot be modified here.');
+        }
+
+        if ($user->role !== 'user') {
+            return back()->with('error', 'Only normal users can be promoted.');
+        }
+
+        $user->role = 'admin';
+        $user->is_main_admin = false;
+        $user->save();
+
+        return back()->with('success', 'User promoted to admin successfully.');
+    })->middleware('role:admin')->name('admin.users.promote');
+
+    Route::post('/admin/users/{user}/demote', function (User $user) {
+        $admin = auth()->user();
+
+        if (! $admin->isMainAdmin()) {
+            abort(403);
+        }
+
+        if ($user->id === $admin->id) {
+            return back()->with('error', 'Main admin cannot demote themselves.');
+        }
+
+        if (! $user->isAdmin()) {
+            return back()->with('error', 'This account is not an admin.');
+        }
+
+        if ($user->isMainAdmin()) {
+            return back()->with('error', 'Main admin cannot be demoted here.');
+        }
+
+        $user->role = 'user';
+        $user->is_main_admin = false;
+        $user->save();
+
+        return back()->with('success', 'Admin changed back to user successfully.');
+    })->middleware('role:admin')->name('admin.users.demote');
+
+    Route::post('/admin/users/{user}/block', function (User $user) {
+        $admin = auth()->user();
+
+        if (! $admin->isAdmin()) {
+            abort(403);
+        }
+
+        if ($user->id === $admin->id) {
+            return back()->with('error', 'You cannot block your own account.');
+        }
+
+        if ($user->isMainAdmin()) {
+            return back()->with('error', 'Main admin cannot be blocked.');
+        }
+
+        $user->is_blocked = true;
+        $user->save();
+
+        return back()->with('success', 'User blocked successfully.');
+    })->middleware('role:admin')->name('admin.users.block');
+
+    Route::post('/admin/users/{user}/unblock', function (User $user) {
+        $admin = auth()->user();
+
+        if (! $admin->isAdmin()) {
+            abort(403);
+        }
+
+        if ($user->isMainAdmin()) {
+            return back()->with('error', 'Main admin cannot be modified here.');
+        }
+
+        $user->is_blocked = false;
+        $user->save();
+
+        return back()->with('success', 'User unblocked successfully.');
+    })->middleware('role:admin')->name('admin.users.unblock');
+
+    Route::delete('/admin/users/{user}', function (User $user) {
+        $admin = auth()->user();
+
+        if (! $admin->isAdmin()) {
+            abort(403);
+        }
+
+        if ($user->id === $admin->id) {
+            return back()->with('error', 'You cannot delete your own account.');
+        }
+
+        if ($user->isMainAdmin()) {
+            return back()->with('error', 'Main admin cannot be deleted.');
+        }
+
+        $user->delete();
+
+        return back()->with('success', 'User deleted successfully.');
+    })->middleware('role:admin')->name('admin.users.delete');
     });
 
-// Route::middleware(['auth'])->group(function () {
+
     
 //     Route::get('/application/form', function () {
 //     return redirect()->route('user.dashboard');
